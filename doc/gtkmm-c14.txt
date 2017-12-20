@@ -1,0 +1,60 @@
+C++11 features
+
+So far, the use of C++11 in gtkmm doesn’t provide much benefit to application developers and you can already use C++11 in applications that use older versions of gtkmm. But it makes life nicer for the gtkmm developers themselves. I’m enjoying learning about the new C++11 features (particularly move constructors) and enjoying our discussions about how best to use them.
+
+I’m reading and re-reading Scott Meyer’s Effective Modern C++ book.  C++11’s rvalue references alone require great care and understanding.
+
+For now, we’ve just made these changes to the **mm projects:
+
+    Using auto to simplify the code.
+    For instance,
+    auto builder = Gtk::Builder::create();
+    Using range-based for-loops.
+    For instance,
+    for(const auto& row : model->children()) { … }
+    Using nullptr instead of 0 or (void*)0.
+    For instance,
+    Gtk::Widget* widget = nullptr;
+    Using the override keyword when we override a virtual method.
+    For instance,
+    bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) override;
+    Using noexcept instead of throw().
+    For instance,
+    virtual ~Exception() noexcept;
+    Using “= delete” instead of private unimplemented copy constructors and operator=().
+    Using C++11 lambdas, instead of sigc::slots, for small callback methods.
+    See below.
+
+libsigc++ with C+11
+
+libsigc++ has also moved to C++11 and we are gradually trying to replace as much as possible of its internals with C++11. Although C++11 has std::function, there’s still no C++11 equivalent for libsigc++ signals and object tracking
+
+You can use C++11 lambda functions with libsigc++. For instance, with glibmm/gtkmm signals:
+
+button.signal_clicked().connect(
+  [] () {
+    std::cout << "clicked" << std::endl;
+  }
+);
+
+And now you don’t need the awkard SIGC_FUNCTORS_DEDUCE_RESULT_TYPE_WITH_DECLTYPE macro if the signal/slot returns a value. For instance:
+
+m_tree_model_filter->set_visible_func(
+  [this] (const Gtk::TreeModel::const_iterator& iter) -> bool
+  {
+    auto row = *iter;
+    return row[m_columns.m_col_show];
+  }
+);
+
+With C++14 that should be even nicer:
+
+m_tree_model_filter->set_visible_func(
+  [this] (auto iter) -> decltype(auto)
+  {
+    auto row = *iter;
+    return row[m_columns.m_col_show];
+  }
+);
+
+These -> return type declarations are necessary in these examples just because of the unusual intermediate type returned by row[].
