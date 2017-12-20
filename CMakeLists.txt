@@ -10,10 +10,13 @@
 #   - ENABLE_WARNINGS_SETTINGS
 #   - ENABLE_LTO
 #
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.9)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR "Do not build in-source. Please remove CMakeCache.txt and the CMakeFiles/ directory. Then build out-of-source.")
+endif()
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
 # Put the project early since modules might need to detect the compiler
@@ -69,17 +72,52 @@ find_lto(CXX)
 #==========================#
 #  oxengmm executable  #
 #==========================#
+set(TARGET_VERSION_MAJOR 0)
+set(TARGET_VERSION_MINOR 1)
+set(TARGET_VERSION_PATCH 2)
+set_property(GLOBAL PROPERTY VERSION    ${TARGET_VERSION_MAJOR}.${TARGET_VERSION_MINOR}.${TARGET_VERSION_PATCH})
+# Define some variables
+set(IGG_PROJECT_PATH 		        ${CMAKE_SOURCE_DIR})
+set(IGG_SOURCE_directory 		${CMAKE_CURRENT_SOURCE_DIR})
 
-set(OXENGMM_SOURCE_FILES source/main.cpp )   # Always list the files explicitly
+set(IGG_INCLUDES_DIRECTORIES 	PRIVATE ${IGG_SOURCE_DIR})
+set(IGG_COMPILE_DEFINITIONS 	PRIVATE -DIGG_VERSION_0)
+set(IGG_LINK_LIBRARIES          PRIVATE m)
+
+if(UNIX)
+	find_package(PkgConfig 	REQUIRED)
+	find_package(Threads 	REQUIRED)
+
+	pkg_check_modules(GTKMM gtkmm-3.0)
+
+	list(APPEND IGG_INCLUDES_DIRECTORIES
+		PRIVATE ${GTKMM_INCLUDE_DIRS})
+
+	list(APPEND IGG_LINK_LIBRARIES
+        
+        	PRIVATE dl
+		PRIVATE ${CMAKE_THREAD_LIBS_INIT}
+		PRIVATE ${GTKMM_LIBRARIES}
+	
+		)
+endif()
+
+set(OXENGMM_SOURCE_FILES ${CMAKE_SOURCE_DIR}/mainwindow.cc
+  ${CMAKE_SOURCE_DIR}/icon.cc
+        ${CMAKE_SOURCE_DIR}/main.cc)  
+
 set(OXENGMM_INCLUDE_FILES )                  # In this case we don't have headers, but always list them so that they appear in the IDE
 
 add_executable(oxengmm ${OXENGMM_SOURCE_FILES} ${BOILERPLATE_INCLUDE_FILES})
-target_link_libraries(oxengmm
-    #PUBLIC # Useful for libraries, see https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html for more details about transitive usage requirements.
-        #libraries/targets to link when linking this library
-        #this will automatically setup the needed flags and dependencies when linking against this target
+
+target_compile_definitions(igg 	${IGG_COMPILE_DEFINITIONS})
+target_include_directories(igg 	${IGG_INCLUDES_DIRECTORIES})
+target_link_libraries(igg 	${IGG_LINK_LIBRARIES})
+
+target_link_libraries(oxengmm	
     PRIVATE # The following libraries are only linked for this target, and its flags/dependencies will not be used when linking against this target
-        general fmt spdlog # It is possible to link some libraries for debug or optimized builds only
+   	     general fmt spdlog 
+	# It is possible to link some libraries for debug or optimized builds only
         #debug DEBUGLIBS
         #optimized RELEASELIBS
 )
