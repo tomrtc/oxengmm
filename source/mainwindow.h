@@ -8,6 +8,16 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/image.h>
 
+
+class MyScrolledWindow : public Gtk::ScrolledWindow
+{
+ public:
+  MyScrolledWindow();
+  virtual ~MyScrolledWindow();
+ protected:
+  void                  on_realize() override;
+};
+
 class MainWindow : public Gtk::Window
 {
 
@@ -16,18 +26,23 @@ public:
   virtual ~MainWindow();
   void			on_what();
 protected:
-
+  void                  on_realize() override;
   void			on_button_clicked();
   void			on_spin_button_clicked();
 
-  Glib::RefPtr<Gtk::Application> _application;
+protected:
+  //int    _hs {0};
+  //int    _ws {0};
+protected:
+  Glib::RefPtr<Gtk::Application>	_application;
   // inner widgets.
-  Gtk::Box		_box {Gtk::ORIENTATION_VERTICAL};
-  Gtk::Box		_buttons_box {Gtk::ORIENTATION_HORIZONTAL};
-  Gtk::Button		_button     {Gtk::Button("Quit")} ;
-  Gtk::SpinButton	_spin_button;
-  Gtk::Image		_image;
-  Gtk::ScrolledWindow	_scrolled_window;
+  Gtk::Box		                _box         {Gtk::ORIENTATION_VERTICAL};
+  Gtk::Box		                _buttons_box {Gtk::ORIENTATION_HORIZONTAL};
+  Gtk::Button		                _button      {Gtk::Button("Quit")} ;
+  Gtk::SpinButton			_spin_button;
+  Gtk::Image				_image;
+  MyScrolledWindow			_scrolled_window;
+  Glib::RefPtr<Gdk::Cursor>             _cursor      {Gdk::Cursor::create(Gdk::ICON)};
 };
 
 #endif // GTKMM_MAINWINDOW_H
